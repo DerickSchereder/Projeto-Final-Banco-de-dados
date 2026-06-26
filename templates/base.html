@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}BD Viagens{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <nav class="navbar">
+        <h2>BD Viagens</h2>
+        <div class="navbar-links">
+            <a href="/pacotes">Pacotes Destaque</a>
+            <a href="/voos">Buscar Voos</a>
+        </div>
+    </nav>
+
+    <div class="conteudo-principal">
+        {% block content %}{% endblock %}
+    </div>
+
+</body>
+</html>

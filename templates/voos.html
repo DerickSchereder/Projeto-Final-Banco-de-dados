@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}Busca de Voos{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/voos.css') }}">
+<style>
+    /* Estilo para a mensagem de boas-vindas inicial */
+    .mensagem-inicial {
+        text-align: center;
+        padding: 80px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        color: #6b7280;
+        margin-top: 20px;
+    }
+    .mensagem-inicial h3 {
+        color: #1f2937;
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- BARRA SUPERIOR DE BUSCA -->
+<div class="search-topbar">
+    <form class="search-form" method="POST" action="/voos">
+        
+        <div class="radio-group">
+            <label><input type="radio" name="tipo_viagem" value="ida_volta" checked> Ida e volta</label>
+            <label><input type="radio" name="tipo_viagem" value="so_ida"> Só ida</label>
+        </div>
+
+        <div class="inputs-row">
+            <div class="input-field">
+                <label>Origem</label>
+                <input type="text" name="origem" list="lista-aeroportos" placeholder="Aeroporto de origem Ex: GRU" required>
+            </div>
+            
+            <div class="input-field switch-icon">⇄</div>
+            
+            <div class="input-field">
+                <label>Destino</label>
+                <input type="text" name="destino" list="lista-aeroportos" placeholder="Aeroporto de destino Ex: EZE" required>
+            </div>
+
+            <div class="input-field">
+                <label>Viajantes</label>
+                <input type="number" name="viajantes" min="1" value="1" required>
+            </div>
+
+            <button type="submit" class="btn-buscar">Buscar Voos</button>
+        </div>
+    </form>
+</div>
+
+<datalist id="lista-aeroportos">
+    {% for aeroporto in aeroportos %}
+        <option value="{{ aeroporto[0] }}">{{ aeroporto[1] }} ({{ aeroporto[0] }})</option>
+    {% endfor %}
+</datalist>
+
+
+<!-- VERIFICA SE O USUÁRIO JÁ FEZ A BUSCA -->
+{% if request.method == 'POST' %}
+
+    <!-- LAYOUT PRINCIPAL (FILTROS + RESULTADOS) SÓ APARECE DEPOIS DA BUSCA -->
+    <div class="main-layout">
+        
+        <!-- BARRA LATERAL DE FILTROS -->
+        <aside class="sidebar-filtros">
+            <h3>Filtros</h3>
+            <button class="btn-limpar" id="btnLimpar">Limpar filtros</button>
+            
+            <div class="filtro-secao">
+                <h4>Quantidade de paradas</h4>
+                <label><input type="checkbox" class="filtro-parada" value="0"> Voo direto</label>
+                <label><input type="checkbox" class="filtro-parada" value="1"> 1 parada</label>
+                <label><input type="checkbox" class="filtro-parada" value="2"> 2 paradas ou mais</label>
+            </div>
+
+            <div class="filtro-secao">
+                <h4>Preço máximo</h4>
+                <input type="range" id="sliderPreco" min="500" max="20000" step="100" value="20000">
+                <p>Até: <strong id="precoDisplay">R$ 20.000,00</strong></p>
+            </div>
+        </aside>
+
+        <!-- RESULTADOS DA CONSULTA -->
+        <section class="feed-voos">
+            
+            {% for voo in voos %}
+            <div class="voo-card" data-paradas="{{ voo[6] }}" data-preco="{{ voo[7] }}">
+                <div class="voo-info">
+                    <div class="voo-cia">
+                        <span class="cia-logo">✈️</span>
+                        <span style="text-align: center;">{{ voo[8] }}</span> <!-- Companhia -->
+                    </div>
+                    
+                    <div class="voo-horarios">
+                        <div class="hora">
+                            <strong>{{ voo[3] }}</strong> <!-- Hora Partida -->
+                            <span>{{ voo[1] }}</span> <!-- Origem -->
+                        </div>
+                        <div class="linha-trajeto">
+                            <span class="duracao">{{ voo[5] }}h de viagem</span> <!-- Duração -->
+                            <hr>
+                            {% if voo[6] == 0 %}
+                                <span class="tipo-voo verde">Direto</span>
+                            {% else %}
+                                <span class="tipo-voo">{{ voo[6] }} parada(s)</span>
+                            {% endif %}
+                        </div>
+                        <div class="hora">
+                            <strong>{{ voo[4] }}</strong> <!-- Hora Chegada -->
+                            <span>{{ voo[2] }}</span> <!-- Destino -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="voo-preco-area">
+                    <span class="preco-label">Preço por viajante</span>
+                    <strong class="preco-valor">R$ {{ "%.2f"|format(voo[7]) }}</strong>
+                    <button class="btn-comprar">Comprar</button>
+                </div>
+            </div>
+            {% else %}
+                <div style="padding: 20px; background: white; border-radius: 8px;">
+                    <h3>Nenhum voo encontrado</h3>
+                    <p>Infelizmente não encontramos voos operando de <strong>{{ request.form.get('origem') }}</strong> para <strong>{{ request.form.get('destino') }}</strong> neste momento. Tente alterar sua busca.</p>
+                </div>
+            {% endfor %}
+
+        </section>
+    </div>
+
+{% else %}
+
+    <!-- MENSAGEM ANTES DA PRIMEIRA BUSCA -->
+    <div class="mensagem-inicial">
+        <h3> Pronto para a sua próxima viagem?</h3>
+        <p>Preencha os aeroportos de origem e destino na barra acima e encontre os melhores voos!</p>
+    </div>
+
+{% endif %}
+
+<!-- Importa o JS no final do arquivo -->
+<script src="{{ url_for('static', filename='js/voos.js') }}"></script>
+{% endblock %}

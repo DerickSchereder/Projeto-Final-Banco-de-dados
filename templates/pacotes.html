@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Nossos Pacotes{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pacotes.css') }}">
+{% endblock %}
+
+{% block content %}
+    <h1>Pacotes Prontos para Você</h1>
+    
+    <div class="grid-pacotes">
+        {% for pacote in lista_pacotes %}
+        <div class="card-viagem">
+            <h3>{{ pacote[1] }}</h3> <p style="color: #6b7280; margin: 0;">Hospedagem: {{ pacote[2] }}</p> <p class="preco">R$ {{ pacote[3] }}</p> <button class="btn-comprar">Ver Detalhes</button>
+        </div>
+        {% else %}
+            <p>Nenhum pacote encontrado no banco de dados.</p>
+        {% endfor %}
+    </div>
+{% endblock %}

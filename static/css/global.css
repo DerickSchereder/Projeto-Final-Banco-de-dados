@@ -1,0 +1,41 @@
+/* Reseta margens e define a fonte do site inteiro */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+}
+
+/* Estilo da Barra de Navegação */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1e3a8a; /* Azul escuro */
+    padding: 15px 40px;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.navbar h2 { margin: 0; }
+
+.navbar-links a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    margin-left: 20px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: background 0.3s;
+}
+
+.navbar-links a:hover {
+    background-color: #3b82f6; /* Azul claro ao passar o mouse */
+}
+
+/* Container que segura o miolo do site */
+.conteudo-principal {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
