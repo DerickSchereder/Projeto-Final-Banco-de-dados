@@ -1,0 +1,225 @@
+-- 1. TABELA: Cliente
+
+CREATE TABLE Cliente (
+    id_cliente SERIAL,
+    cpf_cliente VARCHAR(14) NOT NULL,
+    nome_cliente VARCHAR(100) NOT NULL,
+    nascimento_cliente DATE NOT NULL,
+    PRIMARY KEY (id_cliente),
+    UNIQUE (cpf_cliente)
+);
+
+-- 2. TABELA: Passageiro
+
+CREATE TABLE Passageiro (
+    id_passageiro SERIAL,
+    cpf_passageiro VARCHAR(14) NOT NULL,
+    nome_passageiro VARCHAR(100) NOT NULL,
+    passaporte VARCHAR(20),
+    nascimento_passageiro DATE NOT NULL,
+    PRIMARY KEY (id_passageiro),
+    UNIQUE (cpf_passageiro)
+);
+
+-- 3. TABELA: Carrinho
+
+CREATE TABLE Carrinho (
+    id_carrinho SERIAL,
+    id_cliente INT NOT NULL,
+    PRIMARY KEY (id_carrinho),
+    FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente) ON DELETE CASCADE
+);
+
+-- 9. TABELA: Pais
+CREATE TABLE Pais (
+    id_pais SERIAL PRIMARY KEY,
+    nome_pais VARCHAR(60) NOT NULL UNIQUE
+);
+
+-- 10. TABELA: Estado
+CREATE TABLE Estado (
+    id_estado SERIAL PRIMARY KEY,
+    nome_estado VARCHAR(60) NOT NULL,
+    id_pais INT NOT NULL,
+    FOREIGN KEY (id_pais) REFERENCES Pais(id_pais)
+);
+
+-- 11. TABELA: Cidade
+CREATE TABLE Cidade (
+    id_cidade SERIAL PRIMARY KEY,
+    nome_cidade VARCHAR(60) NOT NULL,
+    id_estado INT NOT NULL,
+    FOREIGN KEY (id_estado) REFERENCES Estado(id_estado)
+);
+
+-- 12. TABELA: Companhia_Aerea
+CREATE TABLE Companhia_Aerea (
+    iata_companhia VARCHAR(3) PRIMARY KEY,
+    nome_companhia VARCHAR(60) NOT NULL
+);
+
+-- 13. TABELA: Aeroporto
+CREATE TABLE Aeroporto (
+    iata_aeroporto VARCHAR(3) PRIMARY KEY,
+    nome_aeroporto VARCHAR(60) NOT NULL,
+    id_cidade INT NOT NULL,
+    FOREIGN KEY (id_cidade) REFERENCES Cidade(id_cidade)
+);
+
+-- 14. TABELA: Rota_Voo
+CREATE TABLE Rota_Voo (
+    id_rota_voo SERIAL PRIMARY KEY,
+    iata_companhia VARCHAR(3) NOT NULL,
+    origem VARCHAR(3) NOT NULL,
+    destino VARCHAR(3) NOT NULL,
+    numero VARCHAR(10) NOT NULL,
+    FOREIGN KEY (iata_companhia) REFERENCES Companhia_Aerea(iata_companhia),
+    FOREIGN KEY (origem) REFERENCES Aeroporto(iata_aeroporto),
+    FOREIGN KEY (destino) REFERENCES Aeroporto(iata_aeroporto)
+);
+
+-- 15. TABELA: Voo
+CREATE TABLE Voo (
+    id_voo SERIAL PRIMARY KEY,
+    id_rota_voo INT NOT NULL,
+    partida_prevista TIMESTAMPTZ NOT NULL,
+    chegada_prevista TIMESTAMPTZ NOT NULL,
+    aviao VARCHAR(30) NOT NULL,
+    FOREIGN KEY (id_rota_voo) REFERENCES Rota_Voo(id_rota_voo)
+);
+
+-- 16. TABELA: Classe_Voo
+CREATE TABLE Classe_Voo (
+    id_classe SERIAL PRIMARY KEY,
+    id_voo INT NOT NULL,
+    nome_classe VARCHAR(30) NOT NULL,
+    tarifa DECIMAL(10,2) NOT NULL,
+    capacidade_total INT NOT NULL,
+    FOREIGN KEY (id_voo) REFERENCES Voo(id_voo),
+    CHECK (nome_classe IN ('economica', 'primeira', 'premium', 'executiva')),
+    CHECK (tarifa > 0),
+    CHECK (capacidade_total > 0),
+    UNIQUE (id_voo, nome_classe) -- Garante que não teremos duas "Econômicas" no mesmo voo
+);
+
+-- 17. TABELA: Rota_Viagem
+CREATE TABLE Rota_Viagem (
+    id_rota_viagem SERIAL PRIMARY KEY,
+    origem VARCHAR(3) NOT NULL,
+    destino VARCHAR(3) NOT NULL,
+    duracao_estimada INT NOT NULL,
+    numero_paradas INT NOT NULL,
+    FOREIGN KEY (origem) REFERENCES Aeroporto(iata_aeroporto),
+    FOREIGN KEY (destino) REFERENCES Aeroporto(iata_aeroporto),
+    CHECK (duracao_estimada > 0),
+    CHECK (numero_paradas >= 0)
+);
+
+-- 18. TABELA: Trecho_Rota_Viagem
+CREATE TABLE Trecho_Rota_Viagem (
+    id_rota_viagem INT NOT NULL,
+    id_rota_voo INT NOT NULL,
+    PRIMARY KEY (id_rota_viagem, id_rota_voo),
+    FOREIGN KEY (id_rota_viagem) REFERENCES Rota_Viagem(id_rota_viagem),
+    FOREIGN KEY (id_rota_voo) REFERENCES Rota_Voo(id_rota_voo)
+);
+
+-- 19. TABELA: Item_Viagem
+CREATE TABLE Item_Viagem (
+    id_item_viagem SERIAL PRIMARY KEY,
+    id_rota_viagem INT NOT NULL,
+    id_carrinho INT NOT NULL,
+    FOREIGN KEY (id_rota_viagem) REFERENCES Rota_Viagem(id_rota_viagem),
+    FOREIGN KEY (id_carrinho) REFERENCES Carrinho(id_carrinho) ON DELETE CASCADE
+);
+
+-- 20. TABELA: Passagem_Voo
+CREATE TABLE Passagem_Voo (
+    id_passagem SERIAL PRIMARY KEY,
+    id_item_viagem INT NOT NULL,
+    id_passageiro INT NOT NULL,
+    id_classe INT NOT NULL,
+    preco DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (id_item_viagem) REFERENCES Item_Viagem(id_item_viagem) ON DELETE CASCADE,
+    FOREIGN KEY (id_passageiro) REFERENCES Passageiro(id_passageiro),
+    FOREIGN KEY (id_classe) REFERENCES Classe_Voo(id_classe),
+    CHECK (preco > 0)
+);
+
+-- 4. TABELA: Hoteis
+
+CREATE TABLE Hoteis (
+    id_hotel SERIAL,
+    nome_hotel VARCHAR(100) NOT NULL,
+    id_cidade INT NOT NULL,
+    preco_diaria DECIMAL(10, 2) NOT NULL,
+    capacidade_quarto INT NOT NULL,
+    PRIMARY KEY (id_hotel),
+    CHECK (preco_diaria > 0),
+    CHECK (capacidade_quarto > 0),
+    FOREIGN KEY (id_cidade) REFERENCES Cidade(id_cidade)
+);
+
+-- 5. TABELA: Pacotes
+
+CREATE TABLE Pacotes (
+    id_pacote SERIAL,
+    id_cidade INT NOT NULL,
+    id_rota_ida INT NOT NULL,
+    id_rota_volta INT NOT NULL,
+    id_hotel INT NOT NULL,
+    categoria_pacote VARCHAR(30) NOT NULL,
+    preco_pacote DECIMAL(10, 2) NOT NULL,
+    duracao_pacote INT NOT NULL,
+    PRIMARY KEY (id_pacote),
+    FOREIGN KEY (id_hotel) REFERENCES Hoteis(id_hotel),
+    CHECK (preco_pacote > 0),
+    CHECK (duracao_pacote > 0),
+    CHECK (categoria_pacote IN ('Historico', 'Baixo Custo', 'Aventura', 'Relaxar', 'Romantico')),
+    FOREIGN KEY (id_cidade) REFERENCES Cidade(id_cidade),
+    FOREIGN KEY (id_rota_ida) REFERENCES Rota_Viagem(id_rota_viagem),
+    FOREIGN KEY (id_rota_volta) REFERENCES Rota_Viagem(id_rota_viagem)
+);
+
+-- 6. TABELA: Item_Pacote
+
+CREATE TABLE Item_Pacote (
+    id_carrinho INT NOT NULL,
+    id_pacote INT NOT NULL,
+    quantidade INT NOT NULL,
+    PRIMARY KEY (id_carrinho, id_pacote),
+    FOREIGN KEY (id_carrinho) REFERENCES Carrinho(id_carrinho) ON DELETE CASCADE,
+    FOREIGN KEY (id_pacote) REFERENCES Pacotes(id_pacote),
+    CHECK (quantidade > 0)
+);
+
+-- 7. TABELA: Item_Hotel
+
+CREATE TABLE Item_Hotel (
+    id_carrinho INT NOT NULL,
+    id_hotel INT NOT NULL,
+    quantidade_diarias INT NOT NULL,
+    PRIMARY KEY (id_carrinho, id_hotel),
+    FOREIGN KEY (id_carrinho) REFERENCES Carrinho(id_carrinho) ON DELETE CASCADE,
+    FOREIGN KEY (id_hotel) REFERENCES Hoteis(id_hotel),
+    CHECK (quantidade_diarias > 0)
+);
+
+-- 8. TABELA: Pedido
+
+CREATE TABLE Pedido (
+    id_pedido SERIAL,
+    id_carrinho INT NOT NULL,
+    id_cliente INT NOT NULL,
+    data_compra TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(30) NOT NULL,
+    forma_pagamento VARCHAR(30) NOT NULL,
+    valor_total DECIMAL(10, 2) NOT NULL,
+    
+    PRIMARY KEY (id_pedido),
+    FOREIGN KEY (id_carrinho) REFERENCES Carrinho(id_carrinho),
+    FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente),
+    CHECK (status IN ('Pago', 'Cancelado', 'Pendente')),
+    CHECK (forma_pagamento IN ('PIX', 'Cartão de Crédito', 'Boleto')),
+    CHECK (valor_total >= 0)
+);

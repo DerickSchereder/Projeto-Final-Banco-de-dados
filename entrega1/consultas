@@ -1,0 +1,187 @@
+CREATE OR REPLACE VIEW classes_com_vaga AS
+SELECT 
+    id_classe,
+    id_voo,
+    nome_classe,
+    tarifa,
+    capacidade_total,
+    (capacidade_total - COUNT(id_passagem))::INT AS lugares_disponiveis 
+FROM classe_voo 
+LEFT JOIN passagem_voo USING (id_classe)
+GROUP BY id_classe
+HAVING (capacidade_total - COUNT(id_passagem)) > 0;
+
+CREATE OR REPLACE VIEW viagens_disponiveis AS
+SELECT DISTINCT
+    id_rota_viagem,
+    origem,
+    destino,
+    duracao_estimada,
+    numero_paradas
+FROM rota_viagem 
+JOIN trecho_rota_viagem USING (id_rota_viagem)
+JOIN voo USING (id_rota_voo)
+JOIN classes_com_vaga USING (id_voo)
+WHERE partida_prevista >= CURRENT_TIMESTAMP;
+
+-- Seleção de informações pra mostrar no “site”, de viagens econômicas 
+-- partindo do aeroporto de guarulhos.
+SELECT 
+    vd.id_rota_viagem AS "Código Viagem",
+    c_orig.nome_cidade AS "Cidade Origem",
+    c_dest.nome_cidade AS "Cidade Destino",
+    vd.duracao_estimada AS "Duração (h)",
+    v.partida_prevista AS "Data/Hora Partida",
+    comp.nome_companhia AS "Companhia",
+    ccv.nome_classe AS "Classe Disponível",
+    ccv.tarifa AS "Preço por Assento",
+    ccv.lugares_disponiveis AS "Assentos Livres"
+FROM viagens_disponiveis vd
+JOIN trecho_rota_viagem USING (id_rota_viagem)
+JOIN voo v USING (id_rota_voo)
+JOIN rota_voo rv USING (id_rota_voo)
+JOIN companhia_aerea comp USING (iata_companhia)
+JOIN classes_com_vaga ccv USING (id_voo)
+-- Pega o nome das cidades dos aeroportos de origem/destino
+JOIN aeroporto a_orig ON vd.origem = a_orig.iata_aeroporto
+JOIN cidade c_orig ON a_orig.id_cidade = c_orig.id_cidade
+JOIN aeroporto a_dest ON vd.destino = a_dest.iata_aeroporto
+JOIN cidade c_dest ON a_dest.id_cidade = c_dest.id_cidade
+-- Filtros que serão aplicados na plataforma da agência
+WHERE vd.origem = 'GRU' 
+  AND ccv.nome_classe = 'economica'
+ORDER BY ccv.tarifa ASC;
+
+
+-- pacotes comercializáveis (com viagens válidas):
+SELECT 
+    p.id_pacote AS "ID Pacote",
+    cid.nome_cidade AS "Destino do Pacote",
+    h.nome_hotel AS "Hospedagem",
+    p.categoria_pacote AS "Categoria",
+    p.duracao_pacote AS "Duração (Dias)",
+    vd_ida.id_rota_viagem AS "ID Rota Ida",
+    vd_volta.id_rota_viagem AS "ID Rota Volta",
+    p.preco_pacote AS "Preço Total do Combo (R$)"
+FROM pacotes p
+JOIN hoteis h USING (id_hotel)
+JOIN cidade cid ON p.id_cidade = cid.id_cidade
+JOIN viagens_disponiveis vd_ida ON p.id_rota_ida = vd_ida.id_rota_viagem
+JOIN viagens_disponiveis vd_volta ON p.id_rota_volta = vd_volta.id_rota_viagem
+ORDER BY p.preco_pacote DESC;
+
+-- exibir o nome de cada cidade de destino, o estado e a quantidade 
+-- total de hotéis cadastrados nela, ordenados de forma decrescente.
+SELECT nome_cidade, nome_estado, COUNT(id_hotel) AS total_hoteis
+FROM Estado 
+NATURAL JOIN Cidade 
+NATURAL JOIN Hoteis
+GROUP BY id_cidade, nome_cidade, nome_estado
+ORDER BY total_hoteis DESC;
+
+-- listar o nome dos clientes e o valor total investido por cada 
+-- um em pedidos com status 'Pago', considerando apenas clientes nascidos antes de 2000.
+SELECT nome_cliente, cpf_cliente, SUM(valor_total) AS total_investido
+FROM Cliente 
+NATURAL JOIN Carrinho 
+NATURAL JOIN Pedido
+WHERE status = 'Pago' 
+  AND nascimento_cliente <= '2000-01-01'
+GROUP BY id_cliente, nome_cliente, cpf_cliente
+ORDER BY total_investido DESC;
+
+-- exibir a forma de pagamento, a quantidade de pedidos realizados e a soma
+-- total de gastos para cada tipo de pagamento em pedidos com status 'Pago'.
+SELECT forma_pagamento, COUNT(id_pedido) AS qtd_pedidos, SUM(valor_total) AS total_faturado
+FROM Pedido
+WHERE status = 'Pago'
+GROUP BY forma_pagamento
+ORDER BY total_faturado DESC;
+
+-- exibir o ID do carrinho e a soma total das quantidades de itens 
+-- de pacotes adicionados, mostrando apenas carrinhos com mais de 1 pacote acumulado.
+SELECT id_carrinho, nome_cliente, SUM(quantidade) AS total_pacotes
+FROM Cliente 
+NATURAL JOIN Carrinho 
+NATURAL JOIN Item_Pacote
+GROUP BY id_carrinho, nome_cliente
+HAVING SUM(quantidade) > 1;
+
+-- exibir o ID do cliente, seu nome e cpf, a quantidade de pedidos que realizaram 
+-- e a soma total dos gastos em pedidos em ordem decrescente para clientes que
+-- tenham gasto mais de 3000 em valor total de pedidos.
+SELECT Cliente.id_cliente, nome_cliente, cpf_cliente, COUNT(id_pedido) AS qtd_pedidos_realizados, SUM(valor_total) AS total_gasto_em_pedidos
+FROM Cliente
+JOIN Carrinho USING(id_cliente)
+JOIN Pedido USING(id_carrinho)
+GROUP BY Cliente.id_cliente, nome_cliente, cpf_cliente
+HAVING SUM(valor_total) > 3000.00
+ORDER BY total_gasto_em_pedidos DESC;
+
+-- buscar os dados dos clientes (nome e CPF) que possuem 
+-- carrinhos registrados no sistema, mas que nunca efetuaram nenhum pedido.
+SELECT distinct nome_cliente, cpf_cliente
+FROM Cliente 
+NATURAL JOIN Carrinho
+WHERE NOT EXISTS (
+    SELECT *
+    FROM Pedido
+    WHERE Pedido.id_carrinho = Carrinho.id_carrinho
+);
+
+-- listar os detalhes de todos os pacotes cuja tarifa seja menor
+-- que a média de preço de todos os pacotes cadastrados.
+SELECT id_pacote, categoria_pacote, preco_pacote, nome_cidade
+FROM Pacotes 
+NATURAL JOIN Hoteis 
+NATURAL JOIN Cidade
+WHERE preco_pacote < (
+    SELECT AVG(preco_pacote) 
+    FROM Pacotes
+);
+
+-- exibir o ID e o nome dos passageiros cadastrados que nenhuma vez
+-- realizaram voos operados pela companhia 'LATAM Airlines'.
+SELECT id_passageiro, nome_passageiro
+FROM Passageiro 
+NATURAL JOIN Passagem_Voo
+
+EXCEPT
+
+SELECT id_passageiro, nome_passageiro
+FROM Passageiro 
+NATURAL JOIN Passagem_Voo 
+NATURAL JOIN Classe_Voo 
+NATURAL JOIN Voo 
+NATURAL JOIN Rota_Voo 
+JOIN Companhia_Aerea USING (iata_companhia)
+WHERE nome_companhia = 'LATAM Airlines';
+
+-- exibir os detalhes das passagens aéreas compradas em pedidos,
+-- contendo o nome do passageiro, a classe do voo e o preço pago.
+SELECT id_pedido, nome_passageiro, nome_classe, preco
+FROM Pedido 
+NATURAL JOIN Carrinho 
+NATURAL JOIN Item_Viagem 
+NATURAL JOIN Passagem_Voo 
+NATURAL JOIN Passageiro 
+JOIN Classe_Voo USING (id_classe);
+select * from pedido
+
+-- comparar os preços das diárias e custo total de estadia para 5 dias entre todos os hoteis,
+-- mostrando seus nomes, cidades onde se localizam e a quantidade de pacotes que incluem estadia nesses hoteis.
+SELECT nome_hotel, nome_cidade,  preco_diaria, (5 * preco_diaria) AS custo_total,
+COUNT(id_pacote) AS quantidade_pacotes
+FROM Hoteis
+JOIN Cidade USING (id_cidade)
+JOIN Pacotes USING (id_hotel)
+GROUP BY nome_hotel, nome_cidade, preco_diaria
+ORDER BY custo_total DESC;
+
+-- visualizar os pacotes turísticos cadastrados que 
+-- pertencem às categorias 'Romantico' ou 'Relaxar'.
+SELECT DISTINCT id_pacote, categoria_pacote, preco_pacote, duracao_pacote, nome_cidade
+FROM Pacotes 
+NATURAL JOIN Cidade
+WHERE categoria_pacote IN ('Romantico', 'Relaxar')
+ORDER BY categoria_pacote, preco_pacote DESC;
