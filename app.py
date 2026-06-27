@@ -1,11 +1,14 @@
 import os
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session, redirect, url_for
 import psycopg2
 from dotenv import load_dotenv
 
 load_dotenv()
 
 app = Flask(__name__)
+
+# Chave para permitir o uso de sessões (carrinho)
+app.secret_key = os.getenv("SECRET_KEY", "chave")
 
 # Função obter conexão com o banco de dados
 def obter_conexao():
@@ -16,6 +19,65 @@ def obter_conexao():
         password =   os.getenv("DB_PASSWORD"),
         port     =   os.getenv("DB_PORT")
     )
+
+# ----------------- ROTAS DO CARRINHO -----------------
+
+@app.route('/carrinho')
+def ver_carrinho():
+    # Pega o carrinho da sessão. Se não existir, inicia uma lista vazia.
+    itens_carrinho = session.get('carrinho', [])
+    
+    # Calcula o valor total somando o preço de cada item
+    valor_total = sum(float(item['preco']) for item in itens_carrinho)
+    
+    return render_template('carrinho.html', itens_carrinho=itens_carrinho, valor_total=valor_total)
+
+
+@app.route('/carrinho/adicionar', methods=['POST'])
+def adicionar_carrinho():
+    # Inicializa o carrinho na sessão caso ele não exista
+    if 'carrinho' not in session:
+        session['carrinho'] = []
+    
+    # Captura os dados enviados pelo botão do formulário
+    tipo = request.form.get('tipo')
+    nome = request.form.get('nome')
+    detalhes = request.form.get('detalhes')
+    preco = request.form.get('preco')
+    
+    # Cria o dicionário do produto
+    novo_item = {
+        'tipo': tipo,
+        'nome': nome,
+        'detalhes': detalhes,
+        'preco': float(preco)
+    }
+    
+    # Adiciona no carrinho e avisa a sessão que houve modificação
+    carrinho_atual = session['carrinho']
+    carrinho_atual.append(novo_item)
+    session['carrinho'] = carrinho_atual
+    
+    return redirect(url_for('ver_carrinho'))
+
+
+@app.route('/carrinho/remover/<int:indice>', methods=['POST'])
+def remover_carrinho(indice):
+    if 'carrinho' in session:
+        carrinho_atual = session['carrinho']
+        if 0 <= indice < len(carrinho_atual):
+            carrinho_atual.pop(indice) # Remove o item pelo índice da lista
+            session['carrinho'] = carrinho_atual
+            
+    return redirect(url_for('ver_carrinho'))
+
+
+@app.route('/carrinho/finalizar', methods=['POST'])
+def finalizar_carrinho():
+    # Limpa o carrinho após finalizar a compra
+    session.pop('carrinho', None)
+    return "<h1>Compra finalizada com sucesso! Obrigado por viajar conosco.</h1>"
+
 # ----------------- ROTA DE PACOTES -----------------
 @app.route('/')
 @app.route('/pacotes')

@@ -123,7 +123,18 @@
                 <div class="voo-preco-area">
                     <span class="preco-label">Preço por viajante</span>
                     <strong class="preco-valor">R$ {{ "%.2f"|format(voo[7]) }}</strong>
-                    <button class="btn-comprar">Comprar</button>
+                    <div class="voo-preco-area">
+                        <span class="preco-label">Preço por viajante</span>
+                        <strong class="preco-valor">R$ {{ "%.2f"|format(voo[7]) }}</strong>
+                    
+                        <form action="/carrinho/adicionar" method="POST" style="width: 100%;">
+                            <input type="hidden" name="tipo" value="voo">
+                            <input type="hidden" name="nome" value="Voo {{ voo[1] }} ➔ {{ voo[2] }}">
+                            <input type="hidden" name="detalhes" value="Companhia: {{ voo[8] }} | Duração: {{ voo[5] }}h">
+                            <input type="hidden" name="preco" value="{{ voo[7] }}">
+                            <button type="submit" class="btn-comprar" style="width: 100%;">Adicionar ao Carrinho</button>
+                        </form>
+                    </div>
                 </div>
             </div>
             {% else %}
