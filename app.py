@@ -23,12 +23,25 @@ def pacotes():
     conn = obter_conexao()
     cursor = conn.cursor()
     
-    # Busca os pacotes no banco
+    # Busca todos pacotes e checa a disponibilidade cruzando com as views de voos
     cursor.execute("""
-        SELECT id_pacote, nome_cidade, nome_hotel, preco_pacote 
-        FROM Pacotes 
-        JOIN Cidade USING (id_cidade)
-        JOIN Hoteis USING (id_hotel);
+        SELECT 
+            p.id_pacote, 
+            cid.nome_cidade, 
+            h.nome_hotel, 
+            p.categoria_pacote, 
+            p.duracao_pacote, 
+            p.preco_pacote,
+            CASE 
+                WHEN vd_ida.id_rota_viagem IS NOT NULL AND vd_volta.id_rota_viagem IS NOT NULL 
+                THEN 1 ELSE 0 
+            END as disponivel
+        FROM Pacotes p
+        JOIN Cidade cid ON p.id_cidade = cid.id_cidade
+        JOIN Hoteis h ON p.id_hotel = h.id_hotel
+        LEFT JOIN viagens_disponiveis vd_ida ON p.id_rota_ida = vd_ida.id_rota_viagem
+        LEFT JOIN viagens_disponiveis vd_volta ON p.id_rota_volta = vd_volta.id_rota_viagem
+        ORDER BY disponivel DESC, p.preco_pacote ASC;
     """)
     dados_pacotes = cursor.fetchall()
     
@@ -36,6 +49,7 @@ def pacotes():
     conn.close()
     
     return render_template('pacotes.html', lista_pacotes=dados_pacotes)
+
 
 # ----------------- ROTA DE VOOS -----------------
 @app.route('/voos', methods=['GET', 'POST'])

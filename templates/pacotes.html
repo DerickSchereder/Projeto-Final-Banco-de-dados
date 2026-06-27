@@ -10,9 +10,40 @@
     <h1>Pacotes Prontos para Você</h1>
     
     <div class="grid-pacotes">
+        <!-- LOOP DO BANCO DE DADOS -->
         {% for pacote in lista_pacotes %}
-        <div class="card-viagem">
-            <h3>{{ pacote[1] }}</h3> <p style="color: #6b7280; margin: 0;">Hospedagem: {{ pacote[2] }}</p> <p class="preco">R$ {{ pacote[3] }}</p> <button class="btn-comprar">Ver Detalhes</button>
+        
+        <!-- Adiciona a classe 'indisponivel' se o pacote[6] for 0 -->
+        <div class="card-viagem {% if pacote[6] == 0 %}indisponivel{% endif %}">
+            
+            <div class="card-header">
+                <h3>{{ pacote[1] }}</h3>
+                <span class="badge-categoria">{{ pacote[3] }}</span>
+            </div>
+            
+            <div class="card-body">
+                <p class="info-item"> <strong>Duração:</strong> {{ pacote[4] }} dias</p>
+                <p class="info-item"> <strong>Estadia:</strong> {{ pacote[2] }}</p>
+                
+                <!-- Tag visual verde ou cinza baseada na consulta do banco -->
+                {% if pacote[6] == 1 %}
+                    <p class="status-disponivel">✓ Disponível para reserva</p>
+                {% else %}
+                    <p class="status-indisponivel"> Temporariamente indisponível</p>
+                {% endif %}
+            </div>
+
+            <div class="card-footer">
+                <p class="preco">R$ {{ "%.2f"|format(pacote[5]) }}</p>
+                
+                <!-- Desativa o botão de compra se não houver voo -->
+                {% if pacote[6] == 1 %}
+                    <button class="btn-comprar">Ver Detalhes</button>
+                {% else %}
+                    <button class="btn-comprar disabled" disabled>Esgotado</button>
+                {% endif %}
+            </div>
+
         </div>
         {% else %}
             <p>Nenhum pacote encontrado no banco de dados.</p>
