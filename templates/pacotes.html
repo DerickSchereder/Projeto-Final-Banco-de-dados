@@ -11,18 +11,42 @@
     
     <div class="grid-pacotes">
         {% for pacote in lista_pacotes %}
-        <div class="card-viagem">
-            <h3>{{ pacote[1] }}</h3> 
-            <p style="color: #6b7280; margin: 0;">Hospedagem: {{ pacote[2] }}</p> 
-            <p class="preco">R$ {{ pacote[3] }}</p> 
+        
+        <div class="card-viagem {% if pacote[6] == 0 %}indisponivel{% endif %}">
             
-            <form action="/carrinho/adicionar" method="POST" style="margin-top: 10px;">
-                <input type="hidden" name="tipo" value="pacote">
-                <input type="hidden" name="nome" value="Pacote para {{ pacote[1] }}">
-                <input type="hidden" name="detalhes" value="Hospedagem: {{ pacote[2] }}">
-                <input type="hidden" name="preco" value="{{ pacote[3] }}">
-                <button type="submit" class="btn-comprar">Adicionar ao Carrinho</button>
-            </form>        
+            <div class="card-header">
+                <h3>{{ pacote[1] }}</h3>
+                <span class="badge-categoria">{{ pacote[3] }}</span>
+            </div>
+            
+            <div class="card-body">
+                <p class="info-item"> <strong>Duração:</strong> {{ pacote[4] }} dias</p>
+                <p class="info-item"> <strong>Estadia:</strong> {{ pacote[2] }}</p>
+                
+                {% if pacote[6] == 1 %}
+                    <p class="status-disponivel">✓ Disponível para reserva</p>
+                {% else %}
+                    <p class="status-indisponivel">Temporariamente indisponível</p>
+                {% endif %}
+            </div>
+
+            <div class="card-footer">
+                <p class="preco">R$ {{ "%.2f"|format(pacote[5]) }}</p>
+                
+                {% if pacote[6] == 1 %}
+                    <form action="/carrinho/adicionar" method="POST" style="width: 100%;">
+                        <input type="hidden" name="tipo" value="pacote">
+                        <input type="hidden" name="id_item" value="{{ pacote[0] }}">
+                        <input type="hidden" name="nome" value="Pacote para {{ pacote[1] }}">
+                        <input type="hidden" name="detalhes" value="Hospedagem: {{ pacote[2] }} ({{ pacote[4] }} dias)">
+                        <input type="hidden" name="preco" value="{{ pacote[5] }}">
+                        <button type="submit" class="btn-comprar">Adicionar ao Carrinho</button>
+                    </form>
+                {% else %}
+                    <button class="btn-comprar disabled" disabled>Esgotado</button>
+                {% endif %}
+            </div>
+
         </div>
         {% else %}
             <p>Nenhum pacote encontrado no banco de dados.</p>

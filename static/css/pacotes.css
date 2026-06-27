@@ -6,34 +6,112 @@
     margin-top: 20px;
 }
 
+/* O Cartão do Pacote */
 .card-viagem {
     background: white;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
-    padding: 25px;
-    width: 300px;
+    padding: 20px;
+    width: 320px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     transition: transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .card-viagem:hover {
-    transform: translateY(-5px); /* Efeito de pular ao passar o mouse */
+    transform: translateY(-5px);
 }
 
-.card-viagem h3 {
-    margin-top: 0;
+/* Estilo para pacotes indisponíveis (deixa levemente opaco) */
+.card-viagem.indisponivel {
+    opacity: 0.75;
+    background-color: #f9fafb;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.card-header h3 {
+    margin: 0;
     color: #1f2937;
+    font-size: 22px;
+}
+
+/* Crachá (Badge) de Categoria */
+.badge-categoria {
+    background-color: #e0e7ff;
+    color: #3730a3;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.card-body {
+    margin-bottom: 15px;
+    flex-grow: 1;
+}
+
+.info-item {
+    color: #4b5563;
+    margin: 8px 0;
+    font-size: 14px;
+}
+
+/* Cores dos Status */
+.status-disponivel {
+    color: #059669;
+    font-weight: bold;
+    font-size: 13px;
+    margin-top: 15px;
+    background: #d1fae5;
+    padding: 6px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.status-indisponivel {
+    color: #6b7280;
+    font-weight: bold;
+    font-size: 13px;
+    margin-top: 15px;
+    background: #f3f4f6;
+    padding: 6px;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.card-footer {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .preco {
-    color: #059669; /* Verde dinheiro */
+    color: #059669;
     font-size: 24px;
     font-weight: 900;
-    margin: 15px 0;
+    margin: 0 0 15px 0;
+    width: 100%;
+    text-align: left;
 }
 
+.card-viagem.indisponivel .preco {
+    color: #6b7280;
+}
+
+/* Botões Customizados */
 .btn-comprar {
-    background-color: #f97316; /* Laranja */
+    background-color: #f97316;
     color: white;
     border: none;
     padding: 12px;
@@ -42,6 +120,14 @@
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
+    transition: background 0.3s;
 }
 
 .btn-comprar:hover { background-color: #ea580c; }
+
+/* Botão Esgotado */
+.btn-comprar.disabled {
+    background-color: #d1d5db;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
