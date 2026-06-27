@@ -12,7 +12,17 @@
     <div class="grid-pacotes">
         {% for pacote in lista_pacotes %}
         <div class="card-viagem">
-            <h3>{{ pacote[1] }}</h3> <p style="color: #6b7280; margin: 0;">Hospedagem: {{ pacote[2] }}</p> <p class="preco">R$ {{ pacote[3] }}</p> <button class="btn-comprar">Ver Detalhes</button>
+            <h3>{{ pacote[1] }}</h3> 
+            <p style="color: #6b7280; margin: 0;">Hospedagem: {{ pacote[2] }}</p> 
+            <p class="preco">R$ {{ pacote[3] }}</p> 
+            
+            <form action="/carrinho/adicionar" method="POST" style="margin-top: 10px;">
+                <input type="hidden" name="tipo" value="pacote">
+                <input type="hidden" name="nome" value="Pacote para {{ pacote[1] }}">
+                <input type="hidden" name="detalhes" value="Hospedagem: {{ pacote[2] }}">
+                <input type="hidden" name="preco" value="{{ pacote[3] }}">
+                <button type="submit" class="btn-comprar">Adicionar ao Carrinho</button>
+            </form>        
         </div>
         {% else %}
             <p>Nenhum pacote encontrado no banco de dados.</p>
