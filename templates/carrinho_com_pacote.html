@@ -1,0 +1,49 @@
+<!-- exibir o ID do carrinho e a soma total das quantidades de itens 
+-- de pacotes adicionados, mostrando apenas carrinhos com mais de 1 pacote acumulado.
+SELECT id_carrinho, nome_cliente, SUM(quantidade) AS total_pacotes
+FROM Cliente 
+NATURAL JOIN Carrinho 
+NATURAL JOIN Item_Pacote
+GROUP BY id_carrinho, nome_cliente
+HAVING SUM(quantidade) > 1; -->
+
+{% extends 'base.html' %}
+
+{% block title %}Carrinhos com Mais de 1 Pacote{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/carrinho_com_pacote.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="relatorio-container">
+    <h1>🛒 Carrinhos Acumulando Pacotes</h1>
+    <p style="color: #6b7280;">Mostrando apenas clientes com mais de 1 pacote adicionado ao carrinho.</p>
+
+    <table class="tabela-relatorio">
+        <thead>
+            <tr>
+                <th>ID do Carrinho</th>
+                <th>Nome do Cliente</th>
+                <th>Total de Pacotes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for linha in dados_relatorio %}
+            <tr>
+                <td><code>#{{ linha[0] }}</code></td>
+                <td><strong>{{ linha[1] }}</strong></td>
+                <td>{{ linha[2] }} pacotes</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align: center; color: #6b7280; padding: 25px;">
+                    Nenhum cliente possui mais de 1 pacote acumulado no carrinho neste momento.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+

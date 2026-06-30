@@ -1,0 +1,57 @@
+<!-- exibir o ID e o nome dos passageiros cadastrados que nenhuma vez
+-- realizaram voos operados pela companhia 'LATAM Airlines'.
+SELECT id_passageiro, nome_passageiro
+FROM Passageiro 
+NATURAL JOIN Passagem_Voo
+
+EXCEPT
+
+SELECT id_passageiro, nome_passageiro
+FROM Passageiro 
+NATURAL JOIN Passagem_Voo 
+NATURAL JOIN Classe_Voo 
+NATURAL JOIN Voo 
+NATURAL JOIN Rota_Voo 
+JOIN Companhia_Aerea USING (iata_companhia)
+WHERE nome_companhia = 'LATAM Airlines';
+-->
+
+{% extends 'base.html' %}
+
+{% block title %}Passageiros Fora da LATAM{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/passageiros_nao_latam.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="relatorio-container">
+    <h1>✈️ Passageiros sem Voos LATAM</h1>
+    <p style="color: #6b7280;">Lista de passageiros cadastrados que já realizaram viagens, mas nenhuma delas foi operada pela companhia LATAM Airlines.</p>
+
+    <table class="tabela-relatorio">
+        <thead>
+            <tr>
+                <th>ID do Passageiro</th>
+                <th>Nome do Passageiro</th>
+                <th>Filtro de Companhia</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for passageiro in lista_passageiros %}
+            <tr>
+                <td><code>#{{ passageiro[0] }}</code></td>
+                <td><strong>{{ passageiro[1] }}</strong></td>
+                <td><span class="badge-status">Nunca voou LATAM</span></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3" style="text-align: center; color: #6b7280; padding: 25px;">
+                    Nenhum passageiro atende a este critério de exclusão.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

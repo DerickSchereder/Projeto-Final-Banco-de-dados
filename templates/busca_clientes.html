@@ -1,0 +1,63 @@
+<!-- exibir o ID do cliente, seu nome e cpf, a quantidade de pedidos que realizaram 
+-- e a soma total dos gastos em pedidos em ordem decrescente para clientes que
+-- tenham gasto mais de 3000 em valor total de pedidos.
+SELECT Cliente.id_cliente, nome_cliente, cpf_cliente, COUNT(id_pedido) AS qtd_pedidos_realizados, SUM(valor_total) AS total_gasto_em_pedidos
+FROM Cliente
+JOIN Carrinho USING(id_cliente)
+JOIN Pedido USING(id_carrinho)
+GROUP BY Cliente.id_cliente, nome_cliente, cpf_cliente
+HAVING SUM(valor_total) > 3000.00
+ORDER BY total_gasto_em_pedidos DESC; 
+Fizemos uma mudança para aceitar parâmetro -->
+
+{% extends 'base.html' %}
+
+{% block title %}Busca de Clientes Premium{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/busca_clientes.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="busca-container">
+    <h1>🔍 Consulta de Clientes por Gastos</h1>
+    <p style="color: #6b7280; margin-bottom: 20px;">Filtre os clientes que gastaram acima de um valor específico em pedidos realizados.</p>
+
+    <div class="filtro-box">
+        <form class="filtro-form" method="POST" action="/busca-clientes">
+            <label for="valor_minimo">Gasto Mínimo (R$):</label>
+            <input type="number" id="valor_minimo" name="valor_minimo" min="0" step="100" value="{{ valor_atual }}">
+            <button type="submit" class="btn-filtrar">Filtrar</button>
+        </form>
+    </div>
+
+    <table class="tabela-busca">
+        <thead>
+            <tr>
+                <th>ID cliente</th>
+                <th>Nome</th>
+                <th>CPF</th>
+                <th>Qtd. Pedidos</th>
+                <th>Total Gasto</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cliente in clientes %}
+            <tr>
+                <td><code>#{{ cliente[0] }}</code></td>
+                <td><strong>{{ cliente[1] }}</strong></td>
+                <td>{{ cliente[2] }}</td>
+                <td>{{ cliente[3] }}</td>
+                <td style="color: #2563eb; font-weight: bold;">R$ {{ "%.2f"|format(cliente[4]) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: #6b7280; padding: 25px;">
+                    Nenhum cliente encontrado com gastos acima de R$ {{ "%.2f"|format(valor_atual) }}.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

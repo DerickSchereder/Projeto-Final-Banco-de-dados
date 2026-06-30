@@ -158,6 +158,213 @@ def voos():
         
     return render_template('voos.html', voos=resultados_voos, aeroportos=lista_aeroportos)
 
+# ----------------- ROTA: CARRINHOS COM MAIS DE 1 PACOTE -----------------
+@app.route('/carrinhos-acumulados')
+def carrinhos_acumulados():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    # Executa a sua consulta exatamente como você definiu
+    cursor.execute("""
+        SELECT id_carrinho, nome_cliente, SUM(quantidade) AS total_pacotes
+        FROM Cliente 
+        NATURAL JOIN Carrinho 
+        NATURAL JOIN Item_Pacote
+        GROUP BY id_carrinho, nome_cliente
+        HAVING SUM(quantidade) > 1;
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    # Envia os dados para a nova página HTML
+    return render_template('carrinho_com_pacote.html', dados_relatorio=resultados)
+
+# ----------------- ROTA: BUSCA DE CLIENTES (COM PARÂMETRO) -----------------
+@app.route('/busca-clientes', methods=['GET', 'POST'])
+def busca_clientes():
+    # Valor padrão inicial se for a primeira vez acessando a página (GET)
+    valor_filtro = 3000.00
+    
+    # Se o usuário submeteu o formulário (POST), captura o valor digitado
+    if request.method == 'POST':
+        valor_digitado = request.form.get('valor_minimo')
+        if valor_digitado:
+            valor_filtro = float(valor_digitado)
+
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    # Substituímos o valor estático por %s para torná-lo parametrizável
+    cursor.execute("""
+        SELECT Cliente.id_cliente, nome_cliente, cpf_cliente, COUNT(id_pedido) AS qtd_pedidos_realizados, SUM(valor_total) AS total_gasto_em_pedidos
+        FROM Cliente
+        JOIN Carrinho USING(id_cliente)
+        JOIN Pedido USING(id_carrinho)
+        GROUP BY Cliente.id_cliente, nome_cliente, cpf_cliente
+        HAVING SUM(valor_total) >= %s
+        ORDER BY total_gasto_em_pedidos DESC;
+    """, (valor_filtro,))
+    
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('busca_clientes.html', clientes=resultados, valor_atual=valor_filtro)
+
+# ----------------- ROTA: CLIENTES COM CARRINHO MAS SEM PEDIDO -----------------
+@app.route('/carrinho-sem-pedido')
+def carrinho_sem_pedido():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    # Executa exatamente a sua consulta SQL com o operador NOT EXISTS
+    cursor.execute("""
+        SELECT DISTINCT nome_cliente, cpf_cliente
+        FROM Cliente 
+        NATURAL JOIN Carrinho
+        WHERE NOT EXISTS (
+            SELECT *
+            FROM Pedido
+            WHERE Pedido.id_carrinho = Carrinho.id_carrinho
+        );
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    # Renderiza o template passando os dados vindos do PostgreSQL
+    return render_template('carrinho_sem_pedido.html', lista_clientes=resultados)
+
+# ----------------- ROTA: DETALHES DE PACOTES ABAIXO DA MÉDIA -----------------
+@app.route('/detalhes-pacotes')
+def detalhes_pacotes():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    # Executa exatamente a sua consulta SQL com a subquery de AVG
+    cursor.execute("""
+        SELECT id_pacote, categoria_pacote, preco_pacote, nome_cidade
+        FROM Pacotes 
+        NATURAL JOIN Hoteis 
+        NATURAL JOIN Cidade
+        WHERE preco_pacote < (
+            SELECT AVG(preco_pacote) 
+            FROM Pacotes
+        );
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    # Renderiza o template passando as informações
+    return render_template('detalhes_pacotes.html', lista_pacotes=resultados)
+
+# ----------------- ROTA: PASSAGEIROS QUE NUNCA VOARAM LATAM -----------------
+@app.route('/passageiros-nao-latam')
+def passageiros_nao_latam():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    # Executa exatamente a sua consulta SQL utilizando o operador EXCEPT
+    cursor.execute("""
+        SELECT id_passageiro, nome_passageiro
+        FROM Passageiro 
+        NATURAL JOIN Passagem_Voo
+
+        EXCEPT
+
+        SELECT id_passageiro, nome_passageiro
+        FROM Passageiro 
+        NATURAL JOIN Passagem_Voo 
+        NATURAL JOIN Classe_Voo 
+        NATURAL JOIN Voo 
+        NATURAL JOIN Rota_Voo 
+        JOIN Companhia_Aerea USING (iata_companhia)
+        WHERE nome_companhia = 'LATAM Airlines';
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    # Renderiza o template passando as informações do banco de dados
+    return render_template('passageiros_nao_latam.html', lista_passageiros=resultados)
+
+# ----------------- ROTA: DETALHES DAS PASSAGENS COMPRADAS -----------------
+@app.route('/detalhes-passagens')
+def detalhes_passagens():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    # Executa exatamente a sua consulta SQL combinando Pedido, Carrinho, Passagem e Passageiro
+    cursor.execute("""
+        SELECT id_pedido, nome_passageiro, nome_classe, preco
+        FROM Pedido 
+        NATURAL JOIN Carrinho 
+        NATURAL JOIN Item_Viagem 
+        NATURAL JOIN Passagem_Voo 
+        NATURAL JOIN Passageiro 
+        JOIN Classe_Voo USING (id_classe);
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    # Renderiza o template passando as informações coletadas do banco
+    return render_template('detalhes_passagens.html', lista_passagens=resultados)
+
+# ----------------- ROTA: COMPARATIVO DE CUSTO DOS HOTÉIS -----------------
+@app.route('/comparativo-hoteis')
+def comparativo_hoteis():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    # Executa exatamente a sua consulta SQL com cálculo de projeção e agregação
+    cursor.execute("""
+        SELECT nome_hotel, nome_cidade,  preco_diaria, (5 * preco_diaria) AS custo_total,
+        COUNT(id_pacote) AS quantidade_pacotes
+        FROM Hoteis
+        JOIN Cidade USING (id_cidade)
+        JOIN Pacotes USING (id_hotel)
+        GROUP BY nome_hotel, nome_cidade, preco_diaria
+        ORDER BY custo_total DESC;
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    # Renderiza o template passando as informações calculadas
+    return render_template('comparativo_hoteis.html', lista_hoteis=resultados)
+
+# ----------------- ROTA: PACOTES TEMÁTICOS (ROMÂNTICO OU RELAXAR) -----------------
+@app.route('/pacotes-tematicos')
+def pacotes_tematicos():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    # Executa exatamente a sua consulta SQL filtrando pelo IN
+    cursor.execute("""
+        SELECT DISTINCT id_pacote, categoria_pacote, preco_pacote, duracao_pacote, nome_cidade
+        FROM Pacotes 
+        NATURAL JOIN Cidade
+        WHERE categoria_pacote IN ('Romantico', 'Relaxar')
+        ORDER BY categoria_pacote, preco_pacote DESC;
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    # Renderiza o template passando as informações coletadas
+    return render_template('pacotes_tematicos.html', lista_pacotes=resultados)
+
 if __name__ == '__main__':
     modo_debug = os.getenv("FLASK_DEBUG") == "True"
     app.run(debug=modo_debug)
