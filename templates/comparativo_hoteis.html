@@ -1,0 +1,53 @@
+<!-- comparar os preços das diárias e custo total de estadia para 5 dias entre todos os hoteis,
+-- mostrando seus nomes, cidades onde se localizam e a quantidade de pacotes que incluem estadia nesses hoteis.
+SELECT nome_hotel, nome_cidade,  preco_diaria, (5 * preco_diaria) AS custo_total,
+COUNT(id_pacote) AS quantidade_pacotes
+FROM Hoteis
+JOIN Cidade USING (id_cidade)
+JOIN Pacotes USING (id_hotel)
+GROUP BY nome_hotel, nome_cidade, preco_diaria
+ORDER BY custo_total DESC;-->
+
+{% extends 'base.html' %}
+
+{% block title %}Comparativo de Hotéis{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/comparativo_hoteis.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="relatorio-container">
+    <h1>🏨 Comparativo de Estadia e Pacotes (5 Dias)</h1>
+    <p style="color: #6b7280;">Análise comparativa de preços de diárias, custo estimado para uma estadia de 5 dias e volume de pacotes associados a cada hotel.</p>
+
+    <table class="tabela-relatorio">
+        <thead>
+            <tr>
+                <th>Hotel</th>
+                <th>Cidade</th>
+                <th>Preço Diária</th>
+                <th>Custo Total (5 dias)</th>
+                <th>Qtd. de Pacotes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for hotel in lista_hoteis %}
+            <tr>
+                <td><strong>{{ hotel[0] }}</strong></td>
+                <td>{{ hotel[1] }}</td>
+                <td style="color: #4b5563;">R$ {{ "%.2f"|format(hotel[2]) }}</td>
+                <td style="color: #10b981; font-weight: bold;">R$ {{ "%.2f"|format(hotel[3]) }}</td>
+                <td><span class="badge-pacotes">{{ hotel[4] }} pacotes</span></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: #6b7280; padding: 25px;">
+                    Nenhum dado de hotel encontrado no sistema.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

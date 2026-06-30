@@ -319,6 +319,30 @@ def detalhes_passagens():
     # Renderiza o template passando as informações coletadas do banco
     return render_template('detalhes_passagens.html', lista_passagens=resultados)
 
+# ----------------- ROTA: COMPARATIVO DE CUSTO DOS HOTÉIS -----------------
+@app.route('/comparativo-hoteis')
+def comparativo_hoteis():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    # Executa exatamente a sua consulta SQL com cálculo de projeção e agregação
+    cursor.execute("""
+        SELECT nome_hotel, nome_cidade,  preco_diaria, (5 * preco_diaria) AS custo_total,
+        COUNT(id_pacote) AS quantidade_pacotes
+        FROM Hoteis
+        JOIN Cidade USING (id_cidade)
+        JOIN Pacotes USING (id_hotel)
+        GROUP BY nome_hotel, nome_cidade, preco_diaria
+        ORDER BY custo_total DESC;
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    # Renderiza o template passando as informações calculadas
+    return render_template('comparativo_hoteis.html', lista_hoteis=resultados)
+
 if __name__ == '__main__':
     modo_debug = os.getenv("FLASK_DEBUG") == "True"
     app.run(debug=modo_debug)
