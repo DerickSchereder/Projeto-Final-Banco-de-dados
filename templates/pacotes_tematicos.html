@@ -1,0 +1,57 @@
+<!---- visualizar os pacotes turísticos cadastrados que 
+-- pertencem às categorias 'Romantico' ou 'Relaxar'.
+SELECT DISTINCT id_pacote, categoria_pacote, preco_pacote, duracao_pacote, nome_cidade
+FROM Pacotes 
+NATURAL JOIN Cidade
+WHERE categoria_pacote IN ('Romantico', 'Relaxar')
+ORDER BY categoria_pacote, preco_pacote DESC;-->
+
+{% extends 'base.html' %}
+
+{% block title %}Pacotes Românticos e Relaxar{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pacotes_tematicos.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="relatorio-container">
+    <h1>💖 Pacotes Temáticos (Romântico & Relaxar)</h1>
+    <p style="color: #6b7280;">Listagem de opções de viagens cadastradas focadas em bem-estar, descanso e momentos especiais.</p>
+
+    <table class="tabela-relatorio">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cidade Destino</th>
+                <th>Categoria</th>
+                <th>Duração</th>
+                <th>Preço</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pacote in lista_pacotes %}
+            <tr>
+                <td><code>#{{ pacote[0] }}</code></td>
+                <td><strong>{{ pacote[4] }}</strong></td>
+                <td>
+                    {% if pacote[1] == 'Romantico' %}
+                        <span class="badge-categoria badge-romantico">💝 Romântico</span>
+                    {% else %}
+                        <span class="badge-categoria badge-relaxar">🍃 Relaxar</span>
+                    {% endif %}
+                </td>
+                <td>{{ pacote[3] }} dias</td>
+                <td style="color: #10b981; font-weight: bold;">R$ {{ "%.2f"|format(pacote[2]) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: #6b7280; padding: 25px;">
+                    Nenhum pacote nestas categorias foi encontrado no momento.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

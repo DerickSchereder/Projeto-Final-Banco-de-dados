@@ -343,6 +343,28 @@ def comparativo_hoteis():
     # Renderiza o template passando as informações calculadas
     return render_template('comparativo_hoteis.html', lista_hoteis=resultados)
 
+# ----------------- ROTA: PACOTES TEMÁTICOS (ROMÂNTICO OU RELAXAR) -----------------
+@app.route('/pacotes-tematicos')
+def pacotes_tematicos():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    # Executa exatamente a sua consulta SQL filtrando pelo IN
+    cursor.execute("""
+        SELECT DISTINCT id_pacote, categoria_pacote, preco_pacote, duracao_pacote, nome_cidade
+        FROM Pacotes 
+        NATURAL JOIN Cidade
+        WHERE categoria_pacote IN ('Romantico', 'Relaxar')
+        ORDER BY categoria_pacote, preco_pacote DESC;
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    # Renderiza o template passando as informações coletadas
+    return render_template('pacotes_tematicos.html', lista_pacotes=resultados)
+
 if __name__ == '__main__':
     modo_debug = os.getenv("FLASK_DEBUG") == "True"
     app.run(debug=modo_debug)
