@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório - Investimento de Clientes Clássicos{% endblock %}
+
+{% block extra_css %}
+<!-- Importa o seu CSS base para tabelas -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base_tabela.css') }}">
+<!-- Importa o CSS específico desta tela para destacar o dinheiro -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/investimento_clientes_antes_2000.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="relatorio-container">
+    <h1>Investimento de Clientes (Nascidos antes de 2000)</h1>
+    <p style="color: #6b7280; margin-bottom: 20px;">
+        <strong>Objetivo:</strong> Listar o nome dos clientes e o valor total investido por cada um em pedidos com status 'Pago', considerando apenas clientes nascidos antes de 2000.
+    </p>
+    
+    <table class="tabela-relatorio">
+        <thead>
+            <tr>
+                <th>Nome do Cliente</th>
+                <th>CPF</th>
+                <th>Total Investido</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for linha in dados %}
+            <tr>
+                <td>{{ linha[0] }}</td> <!-- nome_cliente -->
+                <td>{{ linha[1] }}</td> <!-- cpf_cliente -->
+                <td class="valor-investido">R$ {{ "%.2f"|format(linha[2]) }}</td> <!-- total_investido formatado -->
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3" style="text-align: center; color: #6b7280;">Nenhum cliente atende a estes critérios no momento.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

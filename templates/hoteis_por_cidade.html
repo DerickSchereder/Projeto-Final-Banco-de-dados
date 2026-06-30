@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório - Hotéis por Cidade{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base_tabela.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="relatorio-container">
+    <h1>Hotéis por Cidade</h1>
+    <p style="color: #6b7280; margin-bottom: 20px;">
+        <strong>Objetivo:</strong> Exibir o nome de cada cidade de destino, o estado e a quantidade total de hotéis cadastrados nela, ordenados de forma decrescente.
+    </p>
+    
+    <!-- Tabela usando as suas classes CSS padronizadas -->
+    <table class="tabela-relatorio">
+        <thead>
+            <tr>
+                <th>Cidade</th>
+                <th>Estado</th>
+                <th>Total de Hotéis</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for linha in dados %}
+            <tr>
+                <td>{{ linha[0] }}</td> <!-- nome_cidade -->
+                <td>{{ linha[1] }}</td> <!-- nome_estado -->
+                <td><strong>{{ linha[2] }}</strong></td> <!-- total_hoteis -->
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3" style="text-align: center; color: #6b7280;">Nenhum dado encontrado no banco.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

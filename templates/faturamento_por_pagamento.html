@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório - Faturamento por Forma de Pagamento{% endblock %}
+
+{% block extra_css %}
+<!-- Importa apenas o CSS base, que agora já contém a classe de dinheiro -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base_tabela.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="relatorio-container">
+    <h1>Faturamento por Forma de Pagamento</h1>
+    <p style="color: #6b7280; margin-bottom: 20px;">
+        <strong>Objetivo:</strong> Exibir a forma de pagamento, a quantidade de pedidos realizados e a soma total de gastos para cada tipo de pagamento em pedidos com status 'Pago'.
+    </p>
+    
+    <table class="tabela-relatorio">
+        <thead>
+            <tr>
+                <th>Forma de Pagamento</th>
+                <th>Quantidade de Pedidos</th>
+                <th>Total Faturado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for linha in dados %}
+            <tr>
+                <!-- Letra maiúscula na primeira letra da forma de pagamento para ficar mais bonito na tela -->
+                <td style="text-transform: capitalize;">{{ linha[0] }}</td> 
+                <td>{{ linha[1] }}</td> <!-- qtd_pedidos -->
+                
+                <!-- Aqui usamos a classe que você moveu para o base_tabela.css -->
+                <td class="valor-investido">R$ {{ "%.2f"|format(linha[2]) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3" style="text-align: center; color: #6b7280;">Nenhum pedido pago encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
