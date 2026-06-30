@@ -1,0 +1,48 @@
+<!-- buscar os dados dos clientes (nome e CPF) que possuem 
+-- carrinhos registrados no sistema, mas que nunca efetuaram nenhum pedido.
+SELECT distinct nome_cliente, cpf_cliente
+FROM Cliente 
+NATURAL JOIN Carrinho
+WHERE NOT EXISTS (
+    SELECT *
+    FROM Pedido
+    WHERE Pedido.id_carrinho = Carrinho.id_carrinho
+);
+-->
+{% extends 'base.html' %}
+
+{% block title %}Carrinhos Sem Pedidos{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/carrinho_sem_pedido.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="relatorio-container">
+    <h1>⚠️ Carrinhos Abandonados (Clientes sem Pedido)</h1>
+    <p style="color: #6b7280;">Lista de clientes com carrinho registrado no sistema, mas que nunca efetuaram nenhuma compra.</p>
+
+    <table class="tabela-relatorio">
+        <thead>
+            <tr>
+                <th>Nome do Cliente</th>
+                <th>CPF do Cliente</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cliente in lista_clientes %}
+            <tr>
+                <td><strong>{{ cliente[0] }}</strong></td>
+                <td>{{ cliente[1] }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3" style="text-align: center; color: #6b7280; padding: 25px;">
+                    Nenhum cliente com carrinho abandonado foi encontrado.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

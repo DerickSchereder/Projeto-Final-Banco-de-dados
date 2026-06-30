@@ -214,6 +214,31 @@ def busca_clientes():
     
     return render_template('busca_clientes.html', clientes=resultados, valor_atual=valor_filtro)
 
+# ----------------- ROTA: CLIENTES COM CARRINHO MAS SEM PEDIDO -----------------
+@app.route('/carrinho-sem-pedido')
+def carrinho_sem_pedido():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    # Executa exatamente a sua consulta SQL com o operador NOT EXISTS
+    cursor.execute("""
+        SELECT DISTINCT nome_cliente, cpf_cliente
+        FROM Cliente 
+        NATURAL JOIN Carrinho
+        WHERE NOT EXISTS (
+            SELECT *
+            FROM Pedido
+            WHERE Pedido.id_carrinho = Carrinho.id_carrinho
+        );
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    # Renderiza o template passando os dados vindos do PostgreSQL
+    return render_template('carrinho_sem_pedido.html', lista_clientes=resultados)
+
 if __name__ == '__main__':
     modo_debug = os.getenv("FLASK_DEBUG") == "True"
     app.run(debug=modo_debug)
