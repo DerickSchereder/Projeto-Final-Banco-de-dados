@@ -158,6 +158,29 @@ def voos():
         
     return render_template('voos.html', voos=resultados_voos, aeroportos=lista_aeroportos)
 
+# ----------------- ROTA: CARRINHOS COM MAIS DE 1 PACOTE -----------------
+@app.route('/carrinhos-acumulados')
+def carrinhos_acumulados():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    # Executa a sua consulta exatamente como você definiu
+    cursor.execute("""
+        SELECT id_carrinho, nome_cliente, SUM(quantidade) AS total_pacotes
+        FROM Cliente 
+        NATURAL JOIN Carrinho 
+        NATURAL JOIN Item_Pacote
+        GROUP BY id_carrinho, nome_cliente
+        HAVING SUM(quantidade) > 1;
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    # Envia os dados para a nova página HTML
+    return render_template('carrinho_com_pacote.html', dados_relatorio=resultados)
+
 if __name__ == '__main__':
     modo_debug = os.getenv("FLASK_DEBUG") == "True"
     app.run(debug=modo_debug)
