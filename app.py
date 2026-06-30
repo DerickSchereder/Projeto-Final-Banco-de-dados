@@ -127,12 +127,11 @@ def voos():
     
     if request.method == 'POST':
         origem = request.form.get('origem')
-        destino = request.form.get('destino') # Agora é opcional
+        destino = request.form.get('destino') # opcional
         classe = request.form.get('classe')
         
         origem_iata = origem[:3].upper()
         
-        # A consulta base exigida pelo professor
         query = """
             SELECT 
                 vd.id_rota_viagem AS "Código Viagem",
@@ -160,16 +159,14 @@ def voos():
         # Parâmetros base
         params = [origem_iata, classe]
         
-        # Se o usuário preencheu o destino, nós injetamos o filtro na query!
+        # Se o usuário preencheu o destino, o filtro é injetado na query
         if destino:
             destino_iata = destino[:3].upper()
             query += " AND vd.destino = %s"
             params.append(destino_iata)
             
-        # Adiciona a ordenação no final
         query += " ORDER BY ccv.tarifa ASC;"
         
-        # Executa a query com 2 ou 3 parâmetros dinamicamente
         cursor.execute(query, tuple(params))
         resultados_voos = cursor.fetchall()
         

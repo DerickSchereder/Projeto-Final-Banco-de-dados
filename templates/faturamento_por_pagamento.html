@@ -3,7 +3,7 @@
 {% block title %}Relatório - Faturamento por Forma de Pagamento{% endblock %}
 
 {% block extra_css %}
-<!-- Importa apenas o CSS base, que agora já contém a classe de dinheiro -->
+
 <link rel="stylesheet" href="{{ url_for('static', filename='css/base_tabela.css') }}">
 {% endblock %}
 
@@ -25,11 +25,11 @@
         <tbody>
             {% for linha in dados %}
             <tr>
-                <!-- Letra maiúscula na primeira letra da forma de pagamento para ficar mais bonito na tela -->
+
                 <td style="text-transform: capitalize;">{{ linha[0] }}</td> 
                 <td>{{ linha[1] }}</td> <!-- qtd_pedidos -->
                 
-                <!-- Aqui usamos a classe que você moveu para o base_tabela.css -->
+
                 <td class="valor-investido">R$ {{ "%.2f"|format(linha[2]) }}</td>
             </tr>
             {% else %}

@@ -3,7 +3,7 @@
 {% block title %}Consulta - Detalhamento de Voos{% endblock %}
 
 {% block extra_css %}
-<!-- Reaproveitamos o seu CSS base para tabelas -->
+
 <link rel="stylesheet" href="{{ url_for('static', filename='css/base_tabela.css') }}">
 <style>
     .search-vitrine {
@@ -52,7 +52,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="relatorio-container" style="max-width: 1200px;"> <!-- Deixei mais largo por ter muitas colunas -->
+<div class="relatorio-container" style="max-width: 1200px;"> 
     <h1>Detalhamento de Voos e Assentos</h1>
     <p style="color: #6b7280; margin-bottom: 20px;">
         <strong>Objetivo:</strong> Seleção de informações de viagens partindo de um aeroporto específico, cruzando dados de companhia, horários e vagas.
@@ -62,14 +62,13 @@
     <div class="search-vitrine">
         <form method="POST" action="/voos">
             <div class="input-group">
-                <label>Origem (Obrigatório)</label>
-                <input type="text" name="origem" list="lista-aeroportos" placeholder="Ex: Guarulhos (GRU)" required>
+                <label>Origem </label>
+                <input type="text" name="origem" list="lista-aeroportos" placeholder="Ex: Guarulhos (GRU)" required readonly onclick="this.removeAttribute('readonly')">
             </div>
             
             <div class="input-group">
-                <label>Destino (Opcional)</label>
-                <!-- Tirei o 'required' para funcionar o esquema de consulta flexível -->
-                <input type="text" name="destino" list="lista-aeroportos" placeholder="Deixe em branco para todos">
+                <label>Destino </label>
+                <input type="text" name="destino" list="lista-aeroportos" placeholder="Opcional" readonly onclick="this.removeAttribute('readonly')">
             </div>
 
             <div class="input-group">
@@ -93,7 +92,7 @@
         {% endfor %}
     </datalist>
 
-    <!-- TABELA DE RESULTADOS (Só aparece após o POST) -->
+    <!-- TABELA DE RESULTADOS -->
     {% if request.method == 'POST' %}
         <table class="tabela-relatorio">
             <thead>
@@ -121,7 +120,7 @@
                     <td style="text-transform: capitalize;">{{ voo[6] }}</td> <!-- classe -->
                     <td class="valor-investido">R$ {{ "%.2f"|format(voo[7]) }}</td> <!-- tarifa -->
                     
-                    <!-- Destaque visual se houver poucas vagas (opcional) -->
+                    <!-- Destaque visual se houver poucas vagas  -->
                     <td>
                         {% if voo[8] <= 5 %}
                             <span style="color: #dc2626; font-weight: bold;">{{ voo[8] }} restantes</span>
