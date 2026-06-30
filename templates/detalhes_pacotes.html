@@ -1,0 +1,54 @@
+<!---- listar os detalhes de todos os pacotes cuja tarifa seja menor
+-- que a média de preço de todos os pacotes cadastrados.
+SELECT id_pacote, categoria_pacote, preco_pacote, nome_cidade
+FROM Pacotes 
+NATURAL JOIN Hoteis 
+NATURAL JOIN Cidade
+WHERE preco_pacote < (
+    SELECT AVG(preco_pacote) 
+    FROM Pacotes
+);-->
+
+{% extends 'base.html' %}
+
+{% block title %}Pacotes Econômicos{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/detalhes_pacotes.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="relatorio-container">
+    <h1>🏷️ Ofertas Especiais (Abaixo da Média)</h1>
+    <p style="color: #6b7280;">Lista de pacotes cujos preços estão mais baratos do que a média geral do sistema.</p>
+
+    <table class="tabela-relatorio">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Destino (Cidade)</th>
+                <th>Categoria</th>
+                <th>Preço do Pacote</th>
+                <th>Destaque</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pacote in lista_pacotes %}
+            <tr>
+                <td><code>#{{ pacote[0] }}</code></td>
+                <td><strong>{{ pacote[3] }}</strong></td>
+                <td>{{ pacote[1] }}</td>
+                <td style="color: #059669; font-weight: bold;">R$ {{ "%.2f"|format(pacote[2]) }}</td>
+                <td><span class="badge-economico">Melhor Custo x Benefício</span></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: #6b7280; padding: 25px;">
+                    Nenhum pacote abaixo da média de preço foi encontrado.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

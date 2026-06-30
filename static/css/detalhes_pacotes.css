@@ -1,0 +1,39 @@
+.relatorio-container {
+    max-width: 950px;
+    margin: 30px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.tabela-relatorio {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.tabela-relatorio th, .tabela-relatorio td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.tabela-relatorio th {
+    background-color: #f3f4f6;
+    color: #374151;
+    font-weight: bold;
+}
+
+.tabela-relatorio tr:hover {
+    background-color: #f9fafb;
+}
+
+.badge-economico {
+    background-color: #d1fae5;
+    color: #065f46;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}

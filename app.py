@@ -239,6 +239,31 @@ def carrinho_sem_pedido():
     # Renderiza o template passando os dados vindos do PostgreSQL
     return render_template('carrinho_sem_pedido.html', lista_clientes=resultados)
 
+# ----------------- ROTA: DETALHES DE PACOTES ABAIXO DA MÉDIA -----------------
+@app.route('/detalhes-pacotes')
+def detalhes_pacotes():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    # Executa exatamente a sua consulta SQL com a subquery de AVG
+    cursor.execute("""
+        SELECT id_pacote, categoria_pacote, preco_pacote, nome_cidade
+        FROM Pacotes 
+        NATURAL JOIN Hoteis 
+        NATURAL JOIN Cidade
+        WHERE preco_pacote < (
+            SELECT AVG(preco_pacote) 
+            FROM Pacotes
+        );
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    # Renderiza o template passando as informações
+    return render_template('detalhes_pacotes.html', lista_pacotes=resultados)
+
 if __name__ == '__main__':
     modo_debug = os.getenv("FLASK_DEBUG") == "True"
     app.run(debug=modo_debug)
