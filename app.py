@@ -295,6 +295,30 @@ def passageiros_nao_latam():
     # Renderiza o template passando as informações do banco de dados
     return render_template('passageiros_nao_latam.html', lista_passageiros=resultados)
 
+# ----------------- ROTA: DETALHES DAS PASSAGENS COMPRADAS -----------------
+@app.route('/detalhes-passagens')
+def detalhes_passagens():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    # Executa exatamente a sua consulta SQL combinando Pedido, Carrinho, Passagem e Passageiro
+    cursor.execute("""
+        SELECT id_pedido, nome_passageiro, nome_classe, preco
+        FROM Pedido 
+        NATURAL JOIN Carrinho 
+        NATURAL JOIN Item_Viagem 
+        NATURAL JOIN Passagem_Voo 
+        NATURAL JOIN Passageiro 
+        JOIN Classe_Voo USING (id_classe);
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    # Renderiza o template passando as informações coletadas do banco
+    return render_template('detalhes_passagens.html', lista_passagens=resultados)
+
 if __name__ == '__main__':
     modo_debug = os.getenv("FLASK_DEBUG") == "True"
     app.run(debug=modo_debug)
