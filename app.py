@@ -264,6 +264,37 @@ def detalhes_pacotes():
     # Renderiza o template passando as informações
     return render_template('detalhes_pacotes.html', lista_pacotes=resultados)
 
+# ----------------- ROTA: PASSAGEIROS QUE NUNCA VOARAM LATAM -----------------
+@app.route('/passageiros-nao-latam')
+def passageiros_nao_latam():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    # Executa exatamente a sua consulta SQL utilizando o operador EXCEPT
+    cursor.execute("""
+        SELECT id_passageiro, nome_passageiro
+        FROM Passageiro 
+        NATURAL JOIN Passagem_Voo
+
+        EXCEPT
+
+        SELECT id_passageiro, nome_passageiro
+        FROM Passageiro 
+        NATURAL JOIN Passagem_Voo 
+        NATURAL JOIN Classe_Voo 
+        NATURAL JOIN Voo 
+        NATURAL JOIN Rota_Voo 
+        JOIN Companhia_Aerea USING (iata_companhia)
+        WHERE nome_companhia = 'LATAM Airlines';
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    # Renderiza o template passando as informações do banco de dados
+    return render_template('passageiros_nao_latam.html', lista_passageiros=resultados)
+
 if __name__ == '__main__':
     modo_debug = os.getenv("FLASK_DEBUG") == "True"
     app.run(debug=modo_debug)
