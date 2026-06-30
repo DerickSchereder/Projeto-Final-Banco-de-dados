@@ -181,6 +181,39 @@ def carrinhos_acumulados():
     # Envia os dados para a nova página HTML
     return render_template('carrinho_com_pacote.html', dados_relatorio=resultados)
 
+# ----------------- ROTA: BUSCA DE CLIENTES (COM PARÂMETRO) -----------------
+@app.route('/busca-clientes', methods=['GET', 'POST'])
+def busca_clientes():
+    # Valor padrão inicial se for a primeira vez acessando a página (GET)
+    valor_filtro = 3000.00
+    
+    # Se o usuário submeteu o formulário (POST), captura o valor digitado
+    if request.method == 'POST':
+        valor_digitado = request.form.get('valor_minimo')
+        if valor_digitado:
+            valor_filtro = float(valor_digitado)
+
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    # Substituímos o valor estático por %s para torná-lo parametrizável
+    cursor.execute("""
+        SELECT Cliente.id_cliente, nome_cliente, cpf_cliente, COUNT(id_pedido) AS qtd_pedidos_realizados, SUM(valor_total) AS total_gasto_em_pedidos
+        FROM Cliente
+        JOIN Carrinho USING(id_cliente)
+        JOIN Pedido USING(id_carrinho)
+        GROUP BY Cliente.id_cliente, nome_cliente, cpf_cliente
+        HAVING SUM(valor_total) >= %s
+        ORDER BY total_gasto_em_pedidos DESC;
+    """, (valor_filtro,))
+    
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('busca_clientes.html', clientes=resultados, valor_atual=valor_filtro)
+
 if __name__ == '__main__':
     modo_debug = os.getenv("FLASK_DEBUG") == "True"
     app.run(debug=modo_debug)
