@@ -119,43 +119,60 @@ def voos():
     conn = obter_conexao()
     cursor = conn.cursor()
     
-    # Busca todos os aeroportos para botar nas opções clicáveis no HTML
-    cursor.execute("SELECT iata_aeroporto, nome_aeroporto FROM Aeroporto ORDER BY nome_aeroporto;")
+    # Busca aeroportos para preencher as opções de autocompletar na tela
+    cursor.execute("SELECT iata_aeroporto, nome_aeroporto FROM aeroporto ORDER BY nome_aeroporto")
     lista_aeroportos = cursor.fetchall()
     
-    resultados_voos = []
+    resultados_voos = None
     
-    # Se o usuário clicou em "Buscar" (POST)
     if request.method == 'POST':
         origem = request.form.get('origem')
-        destino = request.form.get('destino')
+        destino = request.form.get('destino') # opcional
+        classe = request.form.get('classe')
         
-        cursor.execute("""
+        origem_iata = origem[:3].upper()
+        
+        query = """
             SELECT 
-                vd.id_rota_viagem,
-                vd.origem,
-                vd.destino,
-                TO_CHAR(v.partida_prevista, 'HH24:MI') AS hora_partida,
-                TO_CHAR(v.chegada_prevista, 'HH24:MI') AS hora_chegada,
-                vd.duracao_estimada,
-                vd.numero_paradas,
-                ccv.tarifa,
-                comp.nome_companhia
+                vd.id_rota_viagem AS "Código Viagem",
+                c_orig.nome_cidade AS "Cidade Origem",
+                c_dest.nome_cidade AS "Cidade Destino",
+                vd.duracao_estimada AS "Duração (h)",
+                TO_CHAR(v.partida_prevista, 'DD/MM/YYYY HH24:MI') AS "Data/Hora Partida",
+                comp.nome_companhia AS "Companhia",
+                ccv.nome_classe AS "Classe Disponível",
+                ccv.tarifa AS "Preço por Assento",
+                ccv.lugares_disponiveis AS "Assentos Livres"
             FROM viagens_disponiveis vd
-            JOIN trecho_rota_viagem trv USING (id_rota_viagem)
+            JOIN trecho_rota_viagem USING (id_rota_viagem)
             JOIN voo v USING (id_rota_voo)
             JOIN rota_voo rv USING (id_rota_voo)
             JOIN companhia_aerea comp USING (iata_companhia)
             JOIN classes_com_vaga ccv USING (id_voo)
-            WHERE vd.origem = %s AND vd.destino = %s
-            ORDER BY ccv.tarifa ASC;
-        """, (origem[:3].upper(), destino[:3].upper())) 
+            JOIN aeroporto a_orig ON vd.origem = a_orig.iata_aeroporto
+            JOIN cidade c_orig ON a_orig.id_cidade = c_orig.id_cidade
+            JOIN aeroporto a_dest ON vd.destino = a_dest.iata_aeroporto
+            JOIN cidade c_dest ON a_dest.id_cidade = c_dest.id_cidade
+            WHERE vd.origem = %s 
+              AND ccv.nome_classe = %s
+        """
+        # Parâmetros base
+        params = [origem_iata, classe]
         
+        # Se o usuário preencheu o destino, o filtro é injetado na query
+        if destino:
+            destino_iata = destino[:3].upper()
+            query += " AND vd.destino = %s"
+            params.append(destino_iata)
+            
+        query += " ORDER BY ccv.tarifa ASC;"
+        
+        cursor.execute(query, tuple(params))
         resultados_voos = cursor.fetchall()
         
     cursor.close()
     conn.close()
-        
+    
     return render_template('voos.html', voos=resultados_voos, aeroportos=lista_aeroportos)
 
 # ----------------- ROTA: CARRINHOS COM MAIS DE 1 PACOTE -----------------
@@ -364,6 +381,95 @@ def pacotes_tematicos():
     
     # Renderiza o template passando as informações coletadas
     return render_template('pacotes_tematicos.html', lista_pacotes=resultados)
+
+
+
+# ----------------- ROTA: hoteis por cidade -----------------
+@app.route('/hoteis-por-cidade')
+def hoteis_por_cidade():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT nome_cidade, nome_estado, COUNT(id_hotel) AS total_hoteis
+        FROM Estado 
+        NATURAL JOIN Cidade 
+        NATURAL JOIN Hoteis
+        GROUP BY id_cidade, nome_cidade, nome_estado
+        ORDER BY total_hoteis DESC;
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('hoteis_por_cidade.html', dados=resultados)
+
+# ----------------- ROTA: investimento clientes -----------------
+@app.route('/investimento_clientes_antes_2000')
+def investimento_clientes_antes_2000():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT nome_cliente, cpf_cliente, SUM(valor_total) AS total_investido
+        FROM Cliente 
+        NATURAL JOIN Carrinho 
+        NATURAL JOIN Pedido
+        WHERE status = 'Pago' 
+          AND nascimento_cliente <= '2000-01-01'
+        GROUP BY id_cliente, nome_cliente, cpf_cliente
+        ORDER BY total_investido DESC;
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('investimento_clientes_antes_2000.html', dados=resultados)
+
+# ----------------- ROTA: faturamento por pagamento -----------------
+@app.route('/faturamento_por_pagamento')
+def faturamento_por_pagamento():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT forma_pagamento, COUNT(id_pedido) AS qtd_pedidos, SUM(valor_total) AS total_faturado
+        FROM Pedido
+        WHERE status = 'Pago'
+        GROUP BY forma_pagamento
+        ORDER BY total_faturado DESC;
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('faturamento_por_pagamento.html', dados=resultados)
+
+# ----------------- ROTA: carrinhos com múltiplos pacotes -----------------
+@app.route('/carrinhos_multiplos_pacotes')
+def carrinhos_multiplos_pacotes():
+    conn = obter_conexao()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT id_carrinho, nome_cliente, SUM(quantidade) AS total_pacotes
+        FROM Cliente 
+        NATURAL JOIN Carrinho 
+        NATURAL JOIN Item_Pacote
+        GROUP BY id_carrinho, nome_cliente
+        HAVING SUM(quantidade) > 1;
+    """)
+    resultados = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('carrinhos_multiplos_pacotes.html', dados=resultados)
+
+
 
 if __name__ == '__main__':
     modo_debug = os.getenv("FLASK_DEBUG") == "True"

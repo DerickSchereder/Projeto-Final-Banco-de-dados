@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório - Carrinhos com Múltiplos Pacotes{% endblock %}
+
+{% block extra_css %}
+<!-- Importa o CSS base de tabelas -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base_tabela.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="relatorio-container">
+    <h1>Carrinhos com Múltiplos Pacotes</h1>
+    <p style="color: #6b7280; margin-bottom: 20px;">
+        <strong>Objetivo:</strong> Exibir o ID do carrinho e a soma total das quantidades de itens de pacotes adicionados, mostrando apenas carrinhos com mais de 1 pacote acumulado.
+    </p>
+    
+    <table class="tabela-relatorio">
+        <thead>
+            <tr>
+                <th>ID do Carrinho</th>
+                <th>Nome do Cliente</th>
+                <th>Total de Pacotes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for linha in dados %}
+            <tr>
+                <td>#{{ linha[0] }}</td> <!-- id_carrinho (coloquei um '#' para dar cara de ID) -->
+                <td>{{ linha[1] }}</td> <!-- nome_cliente -->
+                <td><strong>{{ linha[2] }}</strong> un.</td> <!-- total_pacotes -->
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3" style="text-align: center; color: #6b7280;">Nenhum carrinho com múltiplos pacotes encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
